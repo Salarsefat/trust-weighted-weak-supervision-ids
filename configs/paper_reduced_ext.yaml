@@ -1,0 +1,33 @@
+# Extended oracle set (docs/ORACLES_EXTENDED.md): the reduced profile with the two further label-free oracles
+# 'rate' (repeated connections to one service) and 'beacon' (regular repetition), and the label model with
+# dependent oracles merged into one source ('ds_grouped').  Everything else is configs/paper_reduced.yaml.
+# The corpus of work/ids2018_reduced is read (not changed); results, cache and calibration are written to
+# work/ids2018_reduced_ext.  Its pair statistics are computed once with `twws.cli pairs`.
+base: paper_reduced.yaml
+
+work_dir: work/ids2018_reduced_ext
+corpus_work_dir: work/ids2018_reduced
+
+oracles:
+  enabled: [stat, signature, cluster, transfer, domain, rate, beacon]
+  aggregation: ds_grouped
+  group_jaccard: 0.5
+
+transfer:
+  model_path: work/ids2018_reduced/transfer/transfer_rf.joblib
+
+# The semi-supervised refinement of the first version is off (docs/ORACLES_EXTENDED.md, change 3): applied to the
+# posteriors of the label model it relabels low-trust flows that none of the TCP-based oracles can judge (UDP and
+# other non-TCP flows) by extrapolating from the TCP flows; measured on the training flows, it labels 55.9% of the
+# benign non-TCP flows malicious.  The variants with refinement are part of the ablation study.
+refinement:
+  enabled: false
+
+# the first frozen configuration of the extended oracle set (with the refinement of the first version), reported
+# alongside (docs/ORACLES_EXTENDED.md); its results are written by configs/paper_reduced_ext_frozen.yaml
+report:
+  frozen_work_dir: work/ids2018_reduced_ext_frozen
+  # the method applied to CICIDS2017 without its labels (configs/ids2017_ext.yaml; docs/ORACLES_EXTENDED.md, step 5)
+  second_work_dir: work/ids2017_ext
+  second_dataset_name: CICIDS2017
+  second_frozen_work_dir: work/ids2017_ext_frozen   # configuration fixed before testing, on CICIDS2017

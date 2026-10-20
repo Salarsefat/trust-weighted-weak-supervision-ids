@@ -1,0 +1,46 @@
+# The method of configs/paper_reduced_ext.yaml applied to CICIDS2017 without any of its labels
+# (docs/ORACLES_EXTENDED.md, protocol step 5, "Independent check").
+#
+# * The same oracles and rules, except the transfer classifier, which is trained on labelled CICIDS2017 flows and
+#   is therefore left out.  Every threshold that the method computes from data (statistical guard bands, fan-out
+#   quantile, repeated-connection threshold, clustering) is recomputed by the same rule from the unlabelled
+#   training flows of CICIDS2017; the merging rule of the label model is applied to the votes found there.
+# * The detector uses the hyperparameters selected on CSE-CIC-IDS2018 (search.params_from); no search runs on
+#   CICIDS2017.  Every learned component (scaling, autoencoder, label model, selection, detector) is fitted on the
+#   training flows of CICIDS2017, as in the main experiment.  Ground truth is read only to evaluate.
+# * The corpus of work/ids2017 (built by configs/ids2017.yaml) is read; `twws.cli pairs` adds its pair
+#   statistics.  Results are written to work/ids2017_ext.
+#
+#     python -m twws.cli pairs       --config configs/ids2017_ext.yaml
+#     python -m twws.cli label-check --config configs/ids2017_ext.yaml
+#     python -m twws.cli run         --config configs/ids2017_ext.yaml main
+base: paper_reduced_ext.yaml
+
+work_dir: work/ids2017_ext
+corpus_work_dir: work/ids2017
+capture_dir: work/ids2017
+
+corpus:
+  name: CICIDS2017
+  schedule: configs/attack_schedule_ids2017.yaml
+  pinned_inventory: null
+  days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+  excluded_days: {}
+  background_hosts_per_day: all
+  family_cap: 100000
+  benign_share: 0.83
+  max_rows: 2500000
+
+oracles:
+  enabled: [stat, signature, cluster, domain, rate, beacon]   # no transfer oracle on its own source data
+
+search:
+  params_from: work/ids2018_reduced_ext/results/search.json  # hyperparameters selected on CSE-CIC-IDS2018
+
+experiments:
+  pipeline_seeds: []        # the re-fit of every learned component with other seeds is run on CSE-CIC-IDS2018 only
+
+report:
+  frozen_work_dir: null
+  second_work_dir: null
+  second_frozen_work_dir: null

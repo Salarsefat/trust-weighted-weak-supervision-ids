@@ -1,0 +1,63 @@
+# Attack schedule of CICIDS2017, transcribed from the dataset page
+#   https://www.unb.ca/cic/datasets/ids-2017.html      (retrieved 2026-10-09)
+#
+# CICIDS2017 is captured at one point that sees traffic before and after the firewall NAT.
+# A flow is malicious if
+#   (a) one endpoint is an attacker address (205.174.165.73 Kali; 205.174.165.69-71 Windows), or
+#   (b) it runs between the NAT address 172.16.0.1 and the victim's local address inside an
+#       attack window of that day.
+# Second-stage scanning by the compromised Vista host on Thursday afternoon is Ambiguous.
+# The page states no time zone; the UTC offset is estimated from the traffic (start guess:
+# Atlantic Daylight Time).
+dataset: CICIDS2017
+source: "https://www.unb.ca/cic/datasets/ids-2017.html, retrieved 2026-10-09"
+default_utc_offset_hours: -3
+window_slack_seconds: 120
+internal_net: "192.168.10.0/24"
+nat_address: "172.16.0.1"
+attacker_addresses: ["205.174.165.73", "205.174.165.69", "205.174.165.70", "205.174.165.71"]
+
+days:
+  Monday:
+    date: "2017-07-03"
+    family: Benign
+    attacks: []
+
+  Tuesday:
+    date: "2017-07-04"
+    family: BruteForce
+    attacks:
+      - {name: FTP-Patator, start: "09:20", end: "10:20", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+      - {name: SSH-Patator, start: "14:00", end: "15:00", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+
+  Wednesday:
+    date: "2017-07-05"
+    family: DoS
+    attacks:
+      - {name: DoS-slowloris, start: "09:47", end: "10:10", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+      - {name: DoS-Slowhttptest, start: "10:14", end: "10:35", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+      - {name: DoS-Hulk, start: "10:43", end: "11:00", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+      - {name: DoS-GoldenEye, start: "11:10", end: "11:23", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+      - {name: Heartbleed, family: Heartbleed, start: "15:12", end: "15:32", attackers: ["205.174.165.73"], victims: ["192.168.10.51", "205.174.165.66"]}
+
+  Thursday:
+    date: "2017-07-06"
+    family: Web
+    attacks:
+      - {name: Web-BruteForce, start: "09:20", end: "10:00", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+      - {name: Web-XSS, start: "10:15", end: "10:35", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+      - {name: Web-SQLi, start: "10:40", end: "10:42", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+      - {name: Infiltration-Meta, family: Infiltration, start: "14:19", end: "14:35", attackers: ["205.174.165.73"], victims: ["192.168.10.8"]}
+      - {name: Infiltration-CoolDisk, family: Infiltration, start: "14:53", end: "15:00", attackers: ["205.174.165.73"], victims: ["192.168.10.25"]}
+      - {name: Infiltration-Dropbox, family: Infiltration, start: "15:04", end: "15:45", attackers: ["205.174.165.73"], victims: ["192.168.10.8"],
+         ambiguous_originators: ["192.168.10.8"]}
+
+  Friday:
+    date: "2017-07-07"
+    family: Bot
+    attacks:
+      - {name: Botnet-ARES, family: Bot, start: "10:02", end: "11:02", attackers: ["205.174.165.73"],
+         victims: ["192.168.10.15", "192.168.10.9", "192.168.10.14", "192.168.10.5", "192.168.10.8"]}
+      - {name: PortScan, family: PortScan, start: "13:55", end: "15:29", attackers: ["205.174.165.73"], victims: ["192.168.10.50", "205.174.165.68"]}
+      - {name: DDoS-LOIT, family: DDoS, start: "15:56", end: "16:16", attackers: ["205.174.165.69", "205.174.165.70", "205.174.165.71"],
+         victims: ["192.168.10.50", "205.174.165.68"]}

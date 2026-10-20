@@ -1,0 +1,15 @@
+# The first frozen configuration of the extended oracle set (docs/ORACLES_EXTENDED.md, "Freeze"): identical to
+# configs/paper_reduced_ext.yaml except that the semi-supervised refinement of the first version is on.  Its test
+# result led to change 3 (refinement off); it is computed again here (search and main only) so that the manuscript
+# reports it from a result file.
+base: paper_reduced_ext.yaml
+
+work_dir: work/ids2018_reduced_ext_frozen
+
+refinement:
+  enabled: true
+
+report:
+  frozen_work_dir: null
+  second_work_dir: null
+  second_frozen_work_dir: null

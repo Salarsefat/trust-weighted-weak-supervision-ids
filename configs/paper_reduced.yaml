@@ -1,0 +1,21 @@
+# Reduced profile for machines with less than 32 GB of memory or fewer than 8 cores.
+# Same method and protocol as configs/paper.yaml; smaller corpus and fewer repetitions of
+# the secondary experiments.  State in the manuscript which profile produced the results.
+base: paper.yaml
+
+work_dir: work/ids2018_reduced
+# The captures and their Zeek/Snort output are those of configs/paper.yaml: retrieval and extraction do not
+# depend on any value changed in this file, so both profiles share them (data/, extract/, snort/).
+capture_dir: work/ids2018
+
+corpus:
+  family_cap: 50000
+  max_rows: 1000000
+
+selection:
+  max_rows: 300000
+  rf_max_samples: 100000
+
+experiments:
+  secondary_seeds: [7, 13, 21]
+  dl_max_train_rows: 200000

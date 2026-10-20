@@ -1,0 +1,22 @@
+# The configuration fixed before testing (configs/paper_reduced_ext_frozen.yaml: the refinement of the first version
+# on) applied to CICIDS2017 without any of its labels.  docs/ORACLES_EXTENDED.md specified this test before the votes
+# of the added oracles were computed, when the method still used the refinement; configs/ids2017_ext.yaml runs it for
+# the selected configuration, this file for the configuration as it was specified.  Identical to
+# configs/ids2017_ext.yaml except for the refinement and the hyperparameters, which are those selected for the frozen
+# configuration on CSE-CIC-IDS2018.  Ground truth is read only to evaluate.
+#
+#     python -m twws.cli run --config configs/ids2017_ext_frozen.yaml main
+base: ids2017_ext.yaml
+
+work_dir: work/ids2017_ext_frozen
+
+refinement:
+  enabled: true
+
+search:
+  params_from: work/ids2018_reduced_ext_frozen/results/search.json
+
+report:
+  frozen_work_dir: null
+  second_work_dir: null
+  second_frozen_work_dir: null

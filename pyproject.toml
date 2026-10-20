@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "twws"
+version = "1.0.0"
+description = "Weakly supervised intrusion detection without labels from the monitored network"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy", "pandas", "scipy", "scikit-learn", "xgboost", "lightgbm", "torch", "pytorch-tabnet", "Boruta",
+    "optuna", "numba", "pyarrow", "matplotlib", "PyYAML", "requests", "joblib", "psutil", "zipfile-deflate64",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "scapy"]
+
+[project.scripts]
+twws = "twws.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["twws*"]

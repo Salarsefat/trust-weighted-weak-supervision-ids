@@ -1,0 +1,72 @@
+# Small, fast configuration on SYNTHETIC flows - for code validation only.
+# Nothing produced with this file is reported in the manuscript.
+base: paper.yaml
+
+work_dir: work/smoke
+
+synthetic:
+  enabled: true
+  n_benign_per_day: 12000
+  attack_scale: 0.5
+  n_hosts: 40
+  seed: 3
+  source_seed: 11                 # second synthetic set playing the role of the labelled source data
+
+transfer:
+  schedule: configs/attack_schedule_ids2018.yaml   # the synthetic second corpus follows the same schedule
+  work_dir: work/smoke_src
+
+corpus:
+  family_cap: 4000
+  benign_share: 0.83
+  max_rows: 200000
+
+features:
+  ae_epochs: 6
+  ae_max_rows: 60000
+
+selection:
+  max_rows: 40000
+  rf_max_samples: 20000
+  n_folds: 3
+  compare_max_rows: 8000
+  boruta_max_iter: 8
+
+refinement:
+  max_fit_rows: 40000
+
+model:
+  defaults:
+    num_boost_round: 150
+    early_stopping_rounds: 20
+  es_max_rows: 20000
+
+search:
+  n_trials: 12                    # the 10 random trials are the same configurations as in configs/paper.yaml
+  n_random: 10                    # (same sampler seed and space), so every categorical option is exercised
+  search_rows: 20000
+  val_rows: 10000
+  num_boost_round: 80
+  early_stopping_rounds: 10
+
+experiments:
+  seeds: [7, 13, 21]
+  secondary_seeds: [7, 13]
+  ablation_seeds: [7]
+  pipeline_seeds: [7, 13]
+  bootstrap: 300
+  baseline_trials: 3
+  dl_max_train_rows: 15000
+  dl_epochs: 2
+  seq_window: 8
+  adversarial:
+    max_rows: 4000
+  shap_rows: 1500
+  online:
+    rates: [500, 2000]
+    seconds_per_rate: 3
+    workers: [1, 2]
+    window: 2000
+  qos:
+    speeds: [1, 10]
+    holds: [1, 5]

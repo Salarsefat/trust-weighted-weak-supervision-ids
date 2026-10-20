@@ -1,0 +1,27 @@
+# Second corpus: CICIDS2017.  Used (i) as the labelled source of the transfer oracle and
+# (ii) as the target of the cross-dataset evaluation.  The five daily captures must be on
+# disk (the dataset is distributed by the Canadian Institute for Cybersecurity,
+# https://www.unb.ca/cic/datasets/ids-2017.html); index them with
+#
+#     python -m twws.cli fetch   --config configs/ids2017.yaml --local-root /path/to/CICIDS2017/pcaps
+#     python -m twws.cli extract --config configs/ids2017.yaml
+#     python -m twws.cli corpus  --config configs/ids2017.yaml
+#
+# Accepted layouts: <root>/<Day>/<capture>  or  <root>/<Day>-WorkingHours.pcap
+base: paper.yaml
+
+work_dir: work/ids2017
+
+corpus:
+  name: CICIDS2017
+  schedule: configs/attack_schedule_ids2017.yaml
+  pinned_inventory: null
+  days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+  excluded_days: {}
+  background_hosts_per_day: all     # one capture per day: every capture is retained
+  family_cap: 100000
+  benign_share: 0.83
+  max_rows: 2500000
+
+oracles:
+  enabled: [stat, signature, cluster, domain]   # no transfer oracle on its own source data

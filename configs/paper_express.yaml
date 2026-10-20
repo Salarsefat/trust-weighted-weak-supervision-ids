@@ -1,0 +1,35 @@
+# Express profile: the protocol of configs/paper.yaml on an evaluation corpus of at most 300,000 flows,
+# with smaller budgets for the selection stage and the secondary experiments, so that all twelve
+# experiments finish within a working day on an 8-core laptop.  Method, oracles, features, search space,
+# number of search trials (equal for every model) and the five seeds of the main result are unchanged.
+# Every value set here enters the manuscript through the generated numbers.
+base: paper.yaml
+
+work_dir: work/ids2018_express
+# The captures and their Zeek/Snort output are those of configs/paper.yaml: retrieval and extraction do not
+# depend on any value changed in this file, so all profiles share them (data/, extract/, snort/).
+capture_dir: work/ids2018
+
+corpus:
+  family_cap: 20000
+  max_rows: 300000
+
+selection:
+  max_rows: 150000
+  rf_max_samples: 50000
+  compare_max_rows: 50000          # row cap of the selection baselines
+  boruta_max_iter: 20
+
+search:
+  search_rows: 100000
+  val_rows: 40000
+
+experiments:
+  secondary_seeds: [7, 13, 21]
+  ablation_seeds: [7, 13]
+  pipeline_seeds: [7, 13, 21]
+  dl_max_train_rows: 50000
+  dl_epochs: 6
+  adversarial:
+    max_rows: 30000
+  shap_rows: 10000

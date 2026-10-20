@@ -1,0 +1,195 @@
+# Configuration of the experiments reported in the manuscript.
+# Every value that defines the corpus, the oracles, the search space or a budget is here.
+
+work_dir: work/ids2018            # all intermediate and result files are written below this folder
+
+tools:
+  zeek: null                      # path of the zeek binary (null = search PATH, /opt/zeek/bin, ...)
+  snort: null                     # path of the snort binary (null = search PATH)
+
+compute:
+  n_jobs: -1                      # worker threads/processes (-1 = all logical CPUs)
+  prep_cache: 2                   # prepared conditions kept in memory
+
+# ----------------------------------------------------------------------------- corpus (Step 1)
+corpus:
+  name: CSE-CIC-IDS2018
+  bucket_url: "https://cse-cic-ids2018.s3.ca-central-1.amazonaws.com/"
+  schedule: configs/attack_schedule_ids2018.yaml
+  pinned_inventory: configs/s3_inventory_ids2018.csv
+  # Capture days.  Tuesday-20-02-2018 is the only day distributed as a RAR archive, which does
+  # not allow ranged retrieval of single captures; it is excluded by default (see docs/DATA.md).
+  days:
+    - Wednesday-14-02-2018
+    - Thursday-15-02-2018
+    - Friday-16-02-2018
+    - Wednesday-21-02-2018
+    - Thursday-22-02-2018
+    - Friday-23-02-2018
+    - Wednesday-28-02-2018
+    - Thursday-01-03-2018
+    - Friday-02-03-2018
+  excluded_days:
+    Tuesday-20-02-2018: "distributed as one 44.4 GB RAR archive (no ranged retrieval of single captures)"
+  seed: 42                        # seed of the background-host draw (day index is added)
+  background_hosts_per_day: 20    # captures drawn at random per day in addition to the victims'
+  exclude_hosts: []               # host addresses never drawn as background
+  max_background_member_bytes: 2147483648   # captures above 2 GiB are not drawn as background
+  range_block_mb: 8
+  dedup_tolerance_s: 1.0
+  # evaluation corpus drawn from the stream of all retained flows
+  sample_seed: 42
+  family_cap: 100000              # at most this many flows per attack family
+  benign_share: 0.83              # native class balance of the dataset (official CSVs: 83.07% benign)
+  max_rows: 2500000
+
+extract:
+  entropy_max_bytes: 4096         # payload bytes per direction used for the entropy
+  bare_mode: true                 # zeek -b: only the scripts loaded by zeek/twws_flows.zeek
+  keep_zeek_logs: false
+  n_jobs: null
+
+snort:
+  rules: []                       # rule files; empty = rule files shipped with the distribution
+  base_conf: /etc/snort/snort.conf
+  n_jobs: null
+  alert_slack_s: 1.0
+  # Rule classes whose alerts count for the signature oracle, in Snort's own classification of its rules
+  # (classtype).  Excluded are the informational, policy, protocol-decode and "potentially bad" classes
+  # (not-suspicious, unknown, bad-unknown, misc-activity, protocol-command-decode, string-detect, icmp-event,
+  # tcp-connection, policy-violation, inappropriate-content, web-application-activity, non-standard-protocol,
+  # unusual-client-port-connection, rpc-portmap-decode, system-call-detect, suspicious-filename-detect, sdf)
+  # and the events of preprocessors and decoders, which carry no class.  null = every alert (first version).
+  attack_classtypes: [attempted-recon, successful-recon-limited, successful-recon-largescale, network-scan,
+                      attempted-dos, successful-dos, denial-of-service, attempted-user, unsuccessful-user,
+                      successful-user, attempted-admin, successful-admin, default-login-attempt, suspicious-login,
+                      shellcode-detect, trojan-activity, malware-cnc, web-application-attack, misc-attack,
+                      client-side-exploit, file-format]
+
+# ----------------------------------------------------------------------------- features (Steps 3-4)
+features:
+  windows: {5s: 5.0, 1m: 60.0, 5m: 300.0, 1h: 3600.0}
+  latent_dim: 32
+  ae_hidden: 64
+  ae_epochs: 30
+  ae_max_rows: 1000000
+  impute_clusters: 32
+
+# ----------------------------------------------------------------------------- oracles (Step 2)
+oracles:
+  enabled: [stat, signature, cluster, transfer, domain]
+  c2_list: null                   # abuse.ch Feodo Tracker blocklist file (null = empty list)
+  cluster_max_fit_rows: null      # null = all training rows
+  stat: {syn_ratio: 0.45, bpp_low: 45.0, bpp_high: 1300.0, guard: 0.05}
+  cluster: {eps: 1.6, min_samples: 25, pca_components: 5}
+  transfer: {hi: 0.6, lo: 0.4, n_estimators: 120, max_depth: 16}
+  # fan-out rule: the threshold is this quantile of the fan-out of all originator flows of the training subset
+  # (no labels involved; 0.99 = the top 1 %, fixed a priori, other values in the ablations);
+  # null = the fixed threshold fanout_min (first version)
+  domain: {tls_port_min: 8000, fanout_min: 15, fanout_quantile: 0.99}
+  # oracles 6 and 7 (docs/ORACLES_EXTENDED.md, written before any of their votes was computed); they need the
+  # pair statistics of the corpus (`twws.cli pairs`) and are used when listed in `enabled`
+  rate: {quantile: 0.999, guard: 0.05}      # threshold = quantile over the pairs of the training rows
+  beacon: {min_conn: 10, disp_max: 0.1, iat_min: 1.0}
+
+transfer:
+  schedule: configs/attack_schedule_ids2017.yaml
+  work_dir: work/ids2017
+  model_path: null                # default: <work_dir>/transfer/transfer_rf.joblib
+  max_source_rows: 1500000
+
+refinement:
+  high_trust: 0.8
+  p_flip: 0.85
+  refined_trust: 0.6
+  max_fit_rows: 500000
+
+# ----------------------------------------------------------------------------- selection (Step 5)
+selection:
+  mi_top: 80
+  k: 40
+  n_folds: 5
+  theta: 0.8
+  borderline_low: 0.5
+  max_rows: 600000
+  rf_max_samples: 200000
+  compare_max_rows: null          # row cap of the selection baselines (null = each method's default)
+  boruta_max_iter: 30
+
+# ----------------------------------------------------------------------------- detector (Steps 7-9)
+model:
+  defaults:                       # used before / without the search
+    eta: 0.05
+    max_depth: 6
+    gamma_split: 1.0
+    reg_lambda: 1.0
+    min_child_weight: 1.0
+    colsample_bytree: 0.8
+    subsample: 0.8
+    num_boost_round: 800
+    early_stopping_rounds: 50
+    focal_gamma: 2.0
+    delta: 0.1
+    class_weight: reciprocal
+    hess_floor: 1.0e-6
+    warmup_rounds: 20
+  es_max_rows: 100000
+
+search:                           # randomised start followed by TPE, same budget for every model
+  n_trials: 30
+  n_random: 10
+  seed: 2024
+  search_rows: 300000             # training rows used inside the search (stratified by pseudo-label)
+  val_rows: 100000
+  num_boost_round: 400
+  early_stopping_rounds: 30
+  space:
+    eta: {type: loguniform, low: 0.02, high: 0.3}
+    max_depth: {type: int, low: 3, high: 10}
+    min_child_weight: {type: loguniform, low: 0.1, high: 10.0}
+    gamma_split: {type: uniform, low: 0.0, high: 5.0}
+    reg_lambda: {type: loguniform, low: 0.1, high: 10.0}
+    colsample_bytree: {type: uniform, low: 0.5, high: 1.0}
+    subsample: {type: uniform, low: 0.5, high: 1.0}
+    focal_gamma: {type: categorical, choices: [0.0, 1.0, 2.0]}
+    delta: {type: categorical, choices: [0.1, 0.3, 1.0, none]}
+    class_weight: {type: categorical, choices: [reciprocal, balanced, none]}
+
+# ----------------------------------------------------------------------------- experiments
+experiments:
+  seeds: [7, 13, 21, 42, 101]
+  secondary_seeds: [7, 13, 21, 42, 101]  # protocols, leave-one-attack-out, selection comparison, cross-dataset
+  ablation_seeds: [7, 13, 21]
+  pipeline_seeds: [7, 13, 21, 42, 101]   # re-fit of every learned component (robustness check)
+  bootstrap: 2000
+  bootstrap_seed: 0                # resampling seed of the test-set and paired bootstraps
+  loao_families: [BruteForce, DoS, DDoS, Web, Infiltration, Bot]
+  forward:                        # forward-in-time protocol: whole capture days
+    train: [Wednesday-14-02-2018, Thursday-15-02-2018, Friday-16-02-2018, Wednesday-21-02-2018]
+    val: [Thursday-22-02-2018, Friday-23-02-2018]
+    test: [Wednesday-28-02-2018, Thursday-01-03-2018, Friday-02-03-2018]
+  baselines: [rf, lightgbm, xgb_logloss, cnn1d, lstm, cnn_lstm, tabnet, egraphsage, kitnet]
+  baseline_trials: 30
+  dl_max_train_rows: 300000
+  dl_epochs: 8
+  seq_window: 16
+  adversarial:
+    pad_bytes: [16, 64, 256, 1024]
+    dummy_packets: [1, 4, 16]
+    stretch: [2.0, 5.0, 20.0]
+    throttle: [2.0, 5.0, 20.0, 100.0]
+    max_rows: 60000
+  shap_rows: 20000
+  online:
+    rates: [1000, 2000, 5000, 10000, 20000, 40000]
+    seconds_per_rate: 20
+    batch_size: 64
+    workers: [1, 2, 4]
+    window: 10000
+  # QoS under enforcement by trace-driven emulation (twws/qos.py): every record of the stream is classified; the
+  # trace is replayed with all times divided by a speed factor (higher offered load); a malicious verdict blocks its
+  # source for the hold-down period (experiments.online.hold_down_s, default 5 s); latency from the load test above
+  qos:
+    speeds: [1, 3, 10, 30, 60, 100, 300]
+    holds: [1, 5, 30, 60]
+    chunk_rows: 400000
